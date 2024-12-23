@@ -241,9 +241,9 @@ final class OpenApiGeneratorService
 
         if ($typeName === JsonResponse::class) {
             return [
-                new OA\Response(response: 200, description: 'Успешный ответ'),
-                new OA\Response(response: 401, description: 'Не авторизован'),
-                new OA\Response(response: 403, description: 'Нет доступа'),
+                new OA\Response(response: 200, description: 'Success'),
+                new OA\Response(response: 401, description: 'Not authorized'),
+                new OA\Response(response: 403, description: 'Forbidden'),
             ];
         }
 
@@ -287,7 +287,7 @@ final class OpenApiGeneratorService
         return [
             new OA\Response(
                 response: 200,
-                description: 'Успешный ответ',
+                description: 'Success',
                 content: $properties ? new OA\MediaType(
                     mediaType: 'application/json',
                     schema: new OA\Schema(
@@ -302,8 +302,8 @@ final class OpenApiGeneratorService
                     )
                 ) : null,
             ),
-            new OA\Response(response: 401, description: 'Не авторизован'),
-            new OA\Response(response: 403, description: 'Нет доступа'),
+            new OA\Response(response: 401, description: 'Not authorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
         ];
     }
 
