@@ -1,5 +1,9 @@
 # Installation
 
+```bash
+composer require uraankhayayaal/openapi-generator-lumen
+```
+
 Register Service Provider in [bootstrap/app.php](bootstrap/app.php):
 ```php
 $app->register(Uraankhayayaal\OpenapiGeneratorLumen\Providers\OpenApiGeneratorProvider::class);
