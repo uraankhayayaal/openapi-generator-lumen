@@ -9,7 +9,7 @@ use ReflectionProperty;
 
 abstract class BaseRequestQueryData extends BaseRequestData
 {
-    protected function getPropValue(Request $request, ReflectionProperty $prop): string
+    protected function getPropValue(Request $request, ReflectionProperty $prop): ?string
     {
         return $request->get($prop->getName());
     }
