@@ -237,56 +237,59 @@ final class OpenApiGeneratorService
 
         $refMethod = $this->getReflectionMethod($action['uses']);
 
-        $typeName = (string) $refMethod->getReturnType();
+        $typeNames = (string) $refMethod->getReturnType();
 
-        if ($typeName === JsonResponse::class) {
-            return [
-                new OA\Response(response: 200, description: 'Success'),
-                new OA\Response(response: 401, description: 'Not authorized'),
-                new OA\Response(response: 403, description: 'Forbidden'),
-            ];
-        }
+        $typeNames = explode('|', $typeNames);
 
-        $reflect = new ReflectionClass($typeName);
+        /** @var OA\Response[] $responses  */
+        $responses = [];
 
-        $properties = [];
+        foreach ($typeNames as $typeName) {
+            if ($typeName === JsonResponse::class) {
+                $responses[] = new OA\Response(response: 200, description: 'Success');
+            }
 
-        if ($reflect->isSubclassOf(self::BASE_RESPONSE_CLASS)) {
-            $props = $reflect->getProperties();
-            foreach ($props as $prop) {
-                $type = OpenApiScalarTypesMapEnum::tryFrom((string) $prop->getType()); // get only defined types for openapi
-                if ($type) {
-                    $popertyAttributes = [
-                        'property' => $prop->getName(),
-                        'type' => $type->getPropertyType(),
-                        'format' => $type->getPropertyFormat(),
-                        'nullable' => $type->isNullable(),
-                    ];
-                    if ($type === OpenApiScalarTypesMapEnum::ARRAY || $type === OpenApiScalarTypesMapEnum::NULLABLE_ARRAY) {
-                        $popertyAttributes['items'] = new OA\Items(anyOf: [
-                            new OA\Schema(type: 'integer'),
-                            new OA\Schema(type: 'string'),
-                            // TODO: Add there object typing (array<array-key,SomeObject> || SomeObject)
-                        ]);
+            $reflect = new ReflectionClass($typeName);
+
+            $properties = [];
+
+            if ($reflect->isSubclassOf(self::BASE_RESPONSE_CLASS)) {
+                $props = array_filter($reflect->getProperties(), function($prop) use($reflect){ 
+                    return $prop->getDeclaringClass()->getName() == $reflect->getName();
+                });
+                foreach ($props as $prop) {
+                    $type = OpenApiScalarTypesMapEnum::tryFrom((string) $prop->getType()); // get only defined types for openapi
+                    if ($type) {
+                        $popertyAttributes = [
+                            'property' => $prop->getName(),
+                            'type' => $type->getPropertyType(),
+                            'format' => $type->getPropertyFormat(),
+                            'nullable' => $type->isNullable(),
+                        ];
+                        if ($type === OpenApiScalarTypesMapEnum::ARRAY || $type === OpenApiScalarTypesMapEnum::NULLABLE_ARRAY) {
+                            $popertyAttributes['items'] = new OA\Items(anyOf: [
+                                new OA\Schema(type: 'integer'),
+                                new OA\Schema(type: 'string'),
+                                // TODO: Add there object typing (array<array-key,SomeObject> || SomeObject)
+                            ]);
+                        }
+                        $properties[] = new OA\Property(
+                            ...$popertyAttributes,
+                        );
                     }
-                    $properties[] = new OA\Property(
-                        ...$popertyAttributes,
-                    );
                 }
             }
-        }
 
-        $schemaName = $reflect->getShortName();
+            $schemaName = $reflect->getShortName();
 
-        $componentSchemas[] = new OA\Schema(
-            schema: $schemaName,
-            type: 'object',
-            properties: $properties,
-        );
+            $componentSchemas[] = new OA\Schema(
+                schema: $schemaName,
+                type: 'object',
+                properties: $properties,
+            );
 
-        return [
-            new OA\Response(
-                response: 200,
+            $responses[] = new OA\Response(
+                response: basename(str_replace('\\', '/', $typeName)),
                 description: 'Success',
                 content: $properties ? new OA\MediaType(
                     mediaType: 'application/json',
@@ -301,7 +304,11 @@ final class OpenApiGeneratorService
                         ],
                     )
                 ) : null,
-            ),
+            );
+        }
+
+        return [
+            ...$responses,
             new OA\Response(response: 401, description: 'Not authorized'),
             new OA\Response(response: 403, description: 'Forbidden'),
         ];
