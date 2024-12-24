@@ -72,10 +72,10 @@ final class OpenApiGeneratorService
     {
         $servers = [];
 
-        foreach (config('openapi-generator.servers') as $servers) {
+        foreach (config('openapi-generator.servers') as $server) {
             $servers[] = new OA\Server(
-                url: $servers['host'],
-                description: $servers['description'],
+                url: $server['host'],
+                description: $server['description'],
             );
         }
 
