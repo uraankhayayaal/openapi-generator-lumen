@@ -90,7 +90,7 @@ final class OpenApiGeneratorService
         $paths = [];
 
         foreach (Route::getRoutes() as $route) {
-            if ($this->isClosure($route['action']) || !isset($route['action']['as'])) { // skip callbacks from routs
+            if ($this->isClosure($route['action'])) { // skip callbacks from routs
                 continue;
             }
 
@@ -110,7 +110,7 @@ final class OpenApiGeneratorService
 
         $path = new $httpMethodClass(
             security: $this->getSecurity($route['action']),
-            tags: [$route['action']['as']],
+            tags: isset($route['action']['as']) ? [$route['action']['as']] : null,
             parameters: $this->buildParameters($route['action']),
             requestBody: $this->buildRequestBody($route['action']),
             responses: $this->buildResponses($route['action'], $componentSchemas),
